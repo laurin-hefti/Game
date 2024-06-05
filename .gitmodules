@@ -1,0 +1,3 @@
+[submodule "nation_craft/lib/raylib"]
+	path = nation_craft/lib/raylib
+	url = https://github.com/ryupold/raylib.zig
