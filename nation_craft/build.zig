@@ -1,19 +1,17 @@
 const std = @import("std");
-const raylib = @import("lib/raylib.zig/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addStaticLibrary(.{
-        .name = "nation_craft",
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    b.installArtifact(lib);
+    // const lib = b.addStaticLibrary(.{
+    //     .name = "nation_craft",
+    //     .root_source_file = b.path("src/root.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
+    //
+    // b.installArtifact(lib);
 
     const exe = b.addExecutable(.{
         .name = "nation_craft",
@@ -22,7 +20,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    raylib.addTo(b, exe, target, optimize, .{});
+    exe.linkLibC();
+    exe.linkSystemLibrary("raylib");
 
     b.installArtifact(exe);
 
