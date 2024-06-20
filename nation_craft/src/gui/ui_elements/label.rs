@@ -1,19 +1,17 @@
 use crate::{gui::UiElement, Vec2};
-use macroquad::ui;
+use macroquad::ui::{self, root_ui};
 
 #[derive(Debug)]
-pub struct Button {
+pub struct Label {
     size_percent_parent: Vec2,
     text: String,
-    callback: fn(),
 }
 
-impl Button {
-    pub fn new<S: Into<String>>(pos: Vec2, text: S, callback: fn()) -> Self {
+impl Label {
+    pub fn new<S: Into<String>>(pos: Vec2, text: S) -> Self {
         Self {
             size_percent_parent: pos,
             text: text.into(),
-            callback,
         }
     }
 
@@ -22,18 +20,13 @@ impl Button {
     }
 }
 
-impl UiElement for Button {
+impl UiElement for Label {
     fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
-        if ui::widgets::Button::new(self.text.clone())
+        ui::widgets::Label::new(self.text.clone())
             .position(pos.clone())
             .size(self.abs_size(ref_size))
-            .ui(&mut ui::root_ui())
-        {
-            (self.callback)();
-        }
+            .ui(&mut root_ui());
     }
 
-    fn update(&mut self) {
-        /* Handled in draw */
-    }
+    fn update(&mut self) {}
 }

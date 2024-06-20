@@ -4,8 +4,6 @@ mod constants;
 use gui::ui_presets;
 use macroquad::prelude::*;
 
-const BUTTON_SIZE_PERCENT: Vec2 = Vec2::new(0.1, 0.1);
-
 
 #[macroquad::main("Nation Craft")]
 async fn main() {
@@ -15,7 +13,7 @@ async fn main() {
 
     // Main loop
     loop {
-        clear_background(BLACK);
+        clear_background(GRAY);
         gui.update();
         gui.draw();
         next_frame().await

@@ -2,57 +2,62 @@ use macroquad::math::Vec2;
 
 use super::{UiElement, Widget};
 
-
+#[derive(Debug)]
 pub enum LayoutType {
     Horizontal,
     Vertical,
-    Free(f32),
+    Free,
 }
 
+#[derive(Debug)]
 pub struct Layout {
     pub layout: LayoutType,
     pub children: Vec<Widget>,
-    size: Vec2,
+    size_percent_parent: Vec2,
 }
 
 impl Layout {
     pub fn new(layout: LayoutType, children: Vec<Widget>, size: Option<Vec2>) -> Self {
-        Self {
+        let layout = Self {
             layout,
             children,
-            size: size.unwrap_or(Vec2::ONE),
-        }
+            size_percent_parent: size.unwrap_or(Vec2::ONE),
+        };
+
+        #[cfg(debug_assertions)]
+        layout.abs_size(&layout.size_percent_parent);
+        layout
     }
 
-    pub fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
-        let ref_size = self.size * *ref_size;
-        let mut cursor_pos = Vec2::new(0., 0.);
-        for child in &self.children {
-            match self.layout {
-                LayoutType::Horizontal => {
-                    cursor_pos.y += child.abs_size(&ref_size).x;
-                }
-                LayoutType::Vertical => {
-                    cursor_pos.x += child.abs_size(&ref_size).y;
-                }
-                LayoutType::Free(_) => todo!(),
+    pub fn abs_size(&self, parent_size: &Vec2) -> Vec2 {
+        let ref_size = self.size_percent_parent * *parent_size;
+        match self.layout {
+            LayoutType::Horizontal => {
+                let children_width = self.children.iter().map(|w| w.abs_size(&ref_size).x).sum();
+                #[cfg(debug_assertions)]
+                assert!(
+                    children_width <= ref_size.x,
+                    "NestableWidget: Children are bigger than parent (in width) "
+                );
+                Vec2::new(children_width, ref_size.y)
             }
+            LayoutType::Vertical => {
+                let children_height = self.children.iter().map(|w| w.abs_size(&ref_size).y).sum();
+                #[cfg(debug_assertions)]
+                assert!(
+                    children_height <= ref_size.y,
+                    "NestableWidget: Children are bigger than parent (in height)"
+                );
+                Vec2::new(ref_size.x, children_height)
+            }
+            LayoutType::Free => todo!(),
         }
-        #[cfg(debug_assertions)]
-        if cursor_pos.x < 0. || cursor_pos.y < 0. {
-            panic!("NestableWidget has negative size");
-        }
-        #[cfg(debug_assertions)]
-        if cursor_pos.x > ref_size.x || cursor_pos.y > ref_size.y {
-            panic!("Single elements in NestableWidget are bigger than 1.0 (100 per cent) of their parent");
-        }
-        Vec2::new(cursor_pos.x, cursor_pos.y)
     }
 }
 
 impl UiElement for Layout {
     fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
-        let ref_size = self.size * *ref_size;
+        let ref_size = self.size_percent_parent * *ref_size;
 
         let mut cursor_pos = pos.clone();
         for child in &self.children {
@@ -61,14 +66,15 @@ impl UiElement for Layout {
 
             // Advance the cursor by width of the drawn element so that the next element isn't
             // drawn on top of it
+            let child_size = child.abs_size(&ref_size);
             match self.layout {
                 LayoutType::Horizontal => {
-                    cursor_pos.x += child.abs_size(&ref_size).x;
+                    cursor_pos.x += child_size.x;
                 }
                 LayoutType::Vertical => {
-                    cursor_pos.y += child.abs_size(&ref_size).y;
+                    cursor_pos.y += child_size.y;
                 }
-                LayoutType::Free(_) => todo!(),
+                LayoutType::Free => todo!(),
             }
         }
     }
