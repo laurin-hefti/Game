@@ -75,14 +75,14 @@ pub mod ui_presets {
                         Widget::Button(Button::new(BUTTON_SIZE_PERCENT, "2.0", || {
                             println!("2.0 click")
                         })),
-                        Widget::SpacerPercent(0.3),
+                        Widget::SpacerPercent(0.35),
                         Widget::Label(Label::new(BUTTON_SIZE_PERCENT, "2.1")),
-                        Widget::SpacerPercent(0.4),
-                        Widget::Button(Button::new(BUTTON_SIZE_PERCENT, "2.3", || {
-                            println!("third")
+                        Widget::SpacerPercent(0.35),
+                        Widget::Button(Button::new(BUTTON_SIZE_PERCENT, "2.2", || {
+                            println!("2.2 click")
                         })),
                     ]),
-                    Some(Vec2::new(1.0, 0.4)),
+                    Some(Vec2::new(1.0, 0.5)),
                 )),
             ]),
             None,

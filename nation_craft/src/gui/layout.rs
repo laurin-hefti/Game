@@ -1,3 +1,4 @@
+use log::warn;
 use macroquad::math::Vec2;
 
 use super::{UiElement, Widget};
@@ -35,19 +36,17 @@ impl Layout {
             LayoutType::Horizontal => {
                 let children_width = self.children.iter().map(|w| w.abs_size(&ref_size).x).sum();
                 #[cfg(debug_assertions)]
-                assert!(
-                    children_width <= ref_size.x,
-                    "NestableWidget: Children are bigger than parent (in width) "
-                );
+                if children_width > ref_size.x {
+                    warn!("NestableWidget: Children are bigger than parent (in width)")
+                }
                 Vec2::new(children_width, ref_size.y)
             }
             LayoutType::Vertical => {
                 let children_height = self.children.iter().map(|w| w.abs_size(&ref_size).y).sum();
                 #[cfg(debug_assertions)]
-                assert!(
-                    children_height <= ref_size.y,
-                    "NestableWidget: Children are bigger than parent (in height)"
-                );
+                if children_height > ref_size.y {
+                    warn!("NestableWidget: Children are bigger than parent (in height)")
+                }
                 Vec2::new(ref_size.x, children_height)
             }
             LayoutType::Free => todo!(),
