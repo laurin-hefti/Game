@@ -9,17 +9,6 @@ pub enum Widget {
     SpacerPercent(f32),
 }
 
-impl Widget {
-    pub fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
-        match self {
-            Widget::Layout(widget) => widget.abs_size(ref_size),
-            Widget::Button(button) => button.abs_size(ref_size),
-            Widget::Label(label) => label.abs_size(ref_size),
-            Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * *ref_size,
-        }
-    }
-}
-
 impl UiElement for Widget {
     fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
         match self {
@@ -36,6 +25,15 @@ impl UiElement for Widget {
             Widget::Button(button) => button.update(),
             Widget::Label(label) => label.update(),
             Widget::SpacerPercent(_) => (),
+        }
+    }
+
+    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
+        match self {
+            Widget::Layout(widget) => widget.abs_size(ref_size),
+            Widget::Button(button) => button.abs_size(ref_size),
+            Widget::Label(label) => label.abs_size(ref_size),
+            Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * *ref_size,
         }
     }
 }

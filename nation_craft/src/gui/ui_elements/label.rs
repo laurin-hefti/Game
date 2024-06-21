@@ -14,10 +14,6 @@ impl Label {
             text: text.into(),
         }
     }
-
-    pub fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
-        self.size_percent_parent * *ref_size
-    }
 }
 
 impl UiElement for Label {
@@ -29,4 +25,8 @@ impl UiElement for Label {
     }
 
     fn update(&mut self) {}
+
+    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
+        self.size_percent_parent * *ref_size
+    }
 }

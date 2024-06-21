@@ -18,38 +18,43 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub fn new(layout: LayoutType, children: Vec<Widget>, size: Option<Vec2>) -> Self {
-        let layout = Self {
+    pub fn new(layout: LayoutType, children: Vec<Widget>, size_percent_parent: Vec2) -> Self {
+        Self {
             layout,
             children,
-            size_percent_parent: size.unwrap_or(Vec2::ONE),
-        };
-
-        #[cfg(debug_assertions)]
-        layout.abs_size(&layout.size_percent_parent);
-        layout
+            size_percent_parent,
+        }
     }
 
-    pub fn abs_size(&self, parent_size: &Vec2) -> Vec2 {
-        let ref_size = self.size_percent_parent * *parent_size;
-        match self.layout {
-            LayoutType::Horizontal => {
-                let children_width = self.children.iter().map(|w| w.abs_size(&ref_size).x).sum();
-                #[cfg(debug_assertions)]
-                if children_width > ref_size.x {
-                    warn!("NestableWidget: Children are bigger than parent (in width)")
+    #[cfg(debug_assertions)]
+    pub fn check_for_size_overflow(&self, ref_size: &Vec2) {
+        // Check that actual size of children isn't larger than available space
+        {
+            let available_size = self.size_percent_parent * *ref_size;
+            let children_size = self
+                .children
+                .iter()
+                .map(|child| child.abs_size(ref_size))
+                .sum::<Vec2>();
+            match self.layout {
+                LayoutType::Free | LayoutType::Horizontal => {
+                    if children_size.x > available_size.x {
+                        warn!(
+                            "Layout content width is too large (x: {} > {})",
+                            children_size.x, available_size.x
+                        );
+                    }
                 }
-                Vec2::new(children_width, ref_size.y)
-            }
-            LayoutType::Vertical => {
-                let children_height = self.children.iter().map(|w| w.abs_size(&ref_size).y).sum();
-                #[cfg(debug_assertions)]
-                if children_height > ref_size.y {
-                    warn!("NestableWidget: Children are bigger than parent (in height)")
+                LayoutType::Vertical => {
+                    // TODO: also check for free
+                    if children_size.y > available_size.y {
+                        warn!(
+                            "Layout content height is too large (y: {} > {})",
+                            children_size.y, available_size.y
+                        );
+                    }
                 }
-                Vec2::new(ref_size.x, children_height)
             }
-            LayoutType::Free => todo!(),
         }
     }
 }
@@ -82,5 +87,9 @@ impl UiElement for Layout {
         for child in &mut self.children {
             child.update();
         }
+    }
+
+    fn abs_size(&self, parent_size: &Vec2) -> Vec2 {
+        self.size_percent_parent * *parent_size
     }
 }
