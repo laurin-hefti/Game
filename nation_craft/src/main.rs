@@ -1,9 +1,12 @@
-mod gui;
 mod constants;
+mod gui;
 
-use std::sync::Mutex;
+use constants::BG_COLOR;
 use gui::ui_presets;
-use macroquad::prelude::*;
+use macroquad::{prelude::*, ui::root_ui};
+use std::sync::Mutex;
+
+use crate::gui::style_collection;
 
 pub struct GuiSettings {
     pub screen_size: Vec2,
@@ -22,12 +25,14 @@ static GLOBAL_SETTINGS: Mutex<Settings> = Mutex::new(Settings {
 #[macroquad::main("Nation Craft")]
 async fn main() {
     // Set up logging system
-    let env = env_logger::Env::default()
-        .filter_or("RUST_LOG", "info")
-        .write_style_or("RUST_LOG_STYLE", "none");
+    {
+        let env = env_logger::Env::default()
+            .filter_or("RUST_LOG", "info")
+            .write_style_or("RUST_LOG_STYLE", "none");
 
-    env_logger::init_from_env(env);
-    info!("Starting");
+        env_logger::init_from_env(env);
+        info!("Starting");
+    }
 
     // Draw one frame to get the screen size
     next_frame().await;
@@ -39,12 +44,15 @@ async fn main() {
     #[cfg(debug_assertions)]
     gui.check_for_size_overflow(&screen_size);
 
+    // Style
+    let skin = style_collection::default_skin();
+    root_ui().push_skin(&skin);
+
     // Main loop
     loop {
-        clear_background(GRAY);
+        clear_background(BG_COLOR);
         gui.update();
         gui.draw();
-        gui.check_for_size_overflow(&screen_size);
 
         // Check for low FPS in debug builds
         #[cfg(debug_assertions)]

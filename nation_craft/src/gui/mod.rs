@@ -6,6 +6,7 @@ mod widget;
 // Exports
 pub use layout::{Layout, LayoutType};
 use log::info;
+pub mod style_collection;
 pub use traits::UiElement;
 pub use ui_elements::button::Button;
 pub use widget::Widget;
