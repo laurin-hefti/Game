@@ -1,7 +1,7 @@
 mod constants;
 mod gui;
 
-use constants::BG_COLOR;
+use constants::BG_COLOR_PRIMARY;
 use gui::ui_presets;
 use macroquad::{prelude::*, ui::root_ui};
 use std::sync::Mutex;
@@ -37,7 +37,11 @@ async fn main() {
     // Draw one frame to get the screen size
     next_frame().await;
     let screen_size = Vec2::new(screen_width(), screen_height());
-    GLOBAL_SETTINGS.lock().unwrap().gui.screen_size = screen_size;
+    GLOBAL_SETTINGS
+        .lock()
+        .expect("Couldn't acquire lock")
+        .gui
+        .screen_size = screen_size;
 
     // Which preset to use (a test or the default)
     let mut gui = ui_presets::default_ui();
@@ -50,7 +54,7 @@ async fn main() {
 
     // Main loop
     loop {
-        clear_background(BG_COLOR);
+        clear_background(BG_COLOR_PRIMARY);
         gui.update();
         gui.draw();
 

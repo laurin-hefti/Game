@@ -12,7 +12,7 @@ pub use ui_elements::button::Button;
 pub use widget::Widget;
 
 // Main Ui
-use crate::{Vec2, GLOBAL_SETTINGS};
+use crate::{constants::BUTTON_SIZE, Vec2, GLOBAL_SETTINGS};
 use macroquad::window::{screen_height, screen_width};
 
 #[derive(Debug)]
@@ -25,9 +25,9 @@ impl MainUi {
         Self { root_layout }
     }
 
-    pub fn from<W: Into<Vec<Widget>>>(widgets: W) -> Self {
+    pub fn from_widgets_vertical<T: Into<Vec<Widget>>>(widgets: T) -> Self {
         Self {
-            root_layout: Layout::new(LayoutType::Horizontal, widgets.into(), Vec2::ONE),
+            root_layout: Layout::new(LayoutType::Vertical, widgets.into(), Vec2::new(1.0, 1.0)),
         }
     }
 
@@ -37,7 +37,11 @@ impl MainUi {
 
     pub fn draw(&self) {
         let screen_size = Vec2::new(screen_width(), screen_height());
-        GLOBAL_SETTINGS.lock().unwrap().gui.screen_size = screen_size;
+        GLOBAL_SETTINGS
+            .lock()
+            .expect("Couldn't acquire lock")
+            .gui
+            .screen_size = screen_size;
         self.root_layout.draw(&screen_size, &Vec2::new(0., 0.));
     }
 
@@ -45,86 +49,107 @@ impl MainUi {
         self.root_layout.update();
     }
 }
+
 pub fn quit_all() {
     info!("Quitting");
     std::process::exit(0);
 }
 
+#[macro_export]
+macro_rules! layout {
+    (horizontal, $width:expr, $( $widgets:expr ),* $(,)? ) => {
+        Widget::Layout(Layout::new(
+            LayoutType::Horizontal,
+            Vec::from([
+                $($widgets,)*
+            ]),
+            Vec2::new($width, 1.0),
+        ))
+    };
+    (vertical, $height:expr, $( $widgets:expr ),* $(,)? ) => {
+        Widget::Layout(Layout::new(
+            LayoutType::Vertical,
+            Vec::from([
+                $($widgets,)*
+            ]),
+            Vec2::new(1.0, $height),
+        ))
+    };
+}
+
+fn button_with_rel_size<N: Into<f32>>(text: &str, on_click: fn(), x: N, y: N) -> Widget {
+    Widget::Button(Button::new(Vec2::new(x.into(), y.into()), text, on_click))
+}
+
+fn button_with_abs_size<N: Into<f32>>(text: &str, on_click: fn(), x: N, y: N) -> Widget {
+    Widget::Button(Button::new(Vec2::new(x.into(), y.into()), text, on_click).use_abs_size())
+}
+
+fn button(text: &str, on_click: fn()) -> Widget {
+    Widget::Button(Button::new(BUTTON_SIZE, text, on_click).use_abs_size())
+}
+
 pub mod ui_presets {
+    use crate::gui::button_with_abs_size;
     use macroquad::math::Vec2;
 
-    use super::{quit_all, ui_elements::label::Label, Button, Layout, LayoutType, MainUi, Widget};
+    use super::{
+        button, quit_all, ui_elements::label::Label, Button, Layout, LayoutType, MainUi, Widget,
+    };
     use crate::constants::*;
 
     #[allow(dead_code)]
     pub fn default_ui() -> MainUi {
-        MainUi::new(Layout::new(
-            LayoutType::Vertical,
-            Vec::from([
-                // Title bar
-                Widget::Layout(Layout::new(
-                    LayoutType::Horizontal,
-                    Vec::from([
-                        // Left group (player profile button)
-                        Widget::Button(Button::new(Vec2::new(0.1, 1.0), "Player Profile", || {
-                            println!("Clicked")
-                        })),
-                        Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
-                        // Middle Group (for stats and stuff)
-                        Widget::Button(Button::new(Vec2::new(0.1, 1.0), "Show stats", || ())),
-                        Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
-                        // Right group (close window button)
-                        Widget::Button(Button::new(
-                            Vec2::new(0.03, 0.03 / TITLE_BAR_HEIGHT),
-                            "X",
-                            quit_all,
-                        )),
-                    ]),
-                    Vec2::new(1.0, TITLE_BAR_HEIGHT),
-                )),
-                // Main window content
-                Widget::Layout(Layout::new(
-                    LayoutType::Horizontal,
-                    Vec::from([
-                        Widget::Button(
-                            Button::new(BUTTON_SIZE, "Click me", || println!("Clicked"))
-                                .use_abs_size(),
-                        ),
-                        Widget::Button(
-                            Button::new(BUTTON_SIZE, "Click me", || println!("Clicked"))
-                                .use_abs_size(),
-                        ),
-                    ]),
-                    Vec2::new(1.0, 1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT - 0.01),
-                )),
-                // Footer
-                Widget::Layout(Layout::new(
-                    LayoutType::Horizontal,
-                    Vec::from([
-                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Nation Craft")),
-                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Made by LH&LH")),
-                    ]),
-                    Vec2::new(1.0, BOTTOM_BAR_HEIGHT),
-                )),
-            ]),
-            Vec2::ONE,
-        ))
+        MainUi::from_widgets_vertical([
+            // Title bar
+            layout![
+                horizontal,
+                TITLE_BAR_HEIGHT,
+                // Left group (player profile button)
+                button("Profile", || println!("Profile")),
+                Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
+                // Middle Group (for stats and stuff)
+                button("Stats", || println!("Stats")),
+                Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
+                // Right group (close window button)
+                button_with_abs_size("X", quit_all, 50.0, 50.0),
+            ],
+            // Main window content
+            layout![
+                vertical,
+                1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT,
+                Widget::SpacerPercent(0.1),
+                layout![
+                    horizontal,
+                    1.0,
+                    Widget::Button(Button::new(BUTTON_SIZE, "Here", || {})),
+                    Widget::Button(Button::new(BUTTON_SIZE, "Here", || {}))
+                ]
+            ],
+            // Footer
+            layout![
+                horizontal,
+                BOTTOM_BAR_HEIGHT,
+                Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Nation Craft")),
+                Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Made by LH&LH")),
+            ],
+        ])
     }
 
     #[allow(dead_code)]
     pub fn layout_test_ui() -> MainUi {
-        MainUi::new(Layout::new(
-            LayoutType::Vertical,
-            Vec::from([
-                Widget::SpacerPercent(0.2),
-                Widget::Button(Button::new(BUTTON_SIZE, "Click me", || println!("Clicked"))),
-                Widget::SpacerPercent(0.2),
-                Widget::Button(Button::new(BUTTON_SIZE, "Second", || println!("Second"))),
-                Widget::Button(Button::new(BUTTON_SIZE, "Third", || println!("third"))),
-                Widget::SpacerPercent(0.2),
-                Widget::Button(Button::new(BUTTON_SIZE, "uraa", || println!("uraa"))),
-            ]),
-            Vec2::new(0.5, 0.5), // Size == 100% of parent
-        ))
+        MainUi::from_widgets_vertical([
+            Widget::SpacerPercent(0.2),
+            Widget::Button(
+                Button::new(BUTTON_SIZE, "Click me", || println!("Clicked")).use_abs_size(),
+            ),
+            Widget::SpacerPercent(0.2),
+            Widget::Button(
+                Button::new(BUTTON_SIZE, "Second", || println!("Second")).use_abs_size(),
+            ),
+            Widget::Button(Button::new(BUTTON_SIZE, "Third", || println!("third")).use_abs_size()),
+            Widget::SpacerPercent(0.2),
+            Widget::Button(Button::new(BUTTON_SIZE, "uraa", || println!("uraa")).use_abs_size()),
+        ])
     }
 }
