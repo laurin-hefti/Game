@@ -32,7 +32,7 @@ static GLOBAL_SETTINGS: Mutex<Settings> = Mutex::new(Settings {
 async fn main() {
     if LAURINWILLNURTESTEN {
         
-        let w0: locic::World<2,1,4,0,1> = newWorld(getResource(defaultWorldResources),Map1);
+        let w0: locic::World<2,1,4,0,1,1> = newWorld(getResource(defaultWorldResources),Map1, defaultPlayerSet);
         //let w1 = initWorld![iron];
         println!("{}", w0.avaliableResources[1].name);
 

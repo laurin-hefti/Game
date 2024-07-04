@@ -1,3 +1,5 @@
+use std::default;
+
 #[derive(Debug, Copy, Clone)]
 pub struct ConstVec2<T> {
     pub x: T,
@@ -52,8 +54,10 @@ pub fn getResource<const N: usize>(r: [Resource; N]) -> [Resource; N] {
     return temp_list;
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum FieldProperties_type {}
 
+#[derive(Debug, Copy, Clone)]
 pub struct FieldProperties {
     pub property: FieldProperties_type,
     pub property_str: f64,
@@ -75,9 +79,15 @@ pub const testField: Field<4,0,1> = Field {name: "test", points: [newCV2(0.0,0.0
 
 pub const Map1: [Field<4,0,1>; 1] = [testField];
 
+#[derive(Debug, Copy, Clone)]
 pub struct Troup {
-    
+    id: i64,
+    name: &'static str,
 }
+
+pub const Infantery1: Troup = Troup {id: 0, name: "Infantery level 1"};
+
+//troupcluster and palyer ony has avariabel amount of troup clusters
 
 pub struct Inventory<const RN: usize> {
     pub resources: [Resource; RN],
@@ -87,16 +97,28 @@ pub struct Player<const RN: usize> {
     pub inventory: Inventory<RN>,
     pub name: String,
     pub coutntry_name: String,
-    //troups: dynamicArray
+    pub troups: Vec<Troup>,
 }
 
-pub struct World<const RN: usize, const FN: usize, const M1: usize, const M2: usize, const M3: usize>{
+pub const defaultPlayer: Player<2> = Player {inventory: Inventory{resources: defaultWorldResources},
+                         name: String::new(), coutntry_name: String::new(), troups: Vec::new()};
+
+pub const defaultPlayerSet: [Player<2>; 1] = [defaultPlayer];
+
+impl<const RN: usize> Player<RN> {
+    fn addTroup(&mut self, t: Troup){
+        self.troups.push(t);
+    }
+}
+
+pub struct World<const RN: usize, const FN: usize, const M1: usize, const M2: usize, const M3: usize, const NP: usize>{
     pub avaliableResources: [Resource; RN],
     pub map: [Field<M1, M2, M3>; FN],
+    pub players: [Player<RN>; NP]
 }
 
-pub fn newWorld<const N: usize, const M: usize, const M1: usize, const M2: usize, const M3: usize>
-    (res: [Resource; N], map: [Field<M1,M2,M3>; M]) -> World<N,M,M1,M2,M3>{
-    return World {avaliableResources: res, map: map};
+pub fn newWorld<const N: usize, const M: usize, const M1: usize, const M2: usize, const M3: usize, const NP: usize>
+    (res: [Resource; N], map: [Field<M1,M2,M3>; M], playerList: [Player<N>; NP]) -> World<N,M,M1,M2,M3,NP>{
+    return World {avaliableResources: res, map: map, players: playerList};
 }
 
