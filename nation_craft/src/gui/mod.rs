@@ -76,8 +76,8 @@ macro_rules! vertical {
      $(center: $($center_widgets :expr),* ;)?
      $(bottom: $($bottom_widgets :expr),* $(;)? )?) => {
         crate::gui::Widget::Layout(crate::gui::Layout::new(
-            crate::gui::LayoutType::Horizontal,
-            crate::Vec2::new($height, 1.0), [
+            crate::gui::LayoutType::Vertical,
+            crate::Vec2::new(1.0, $height), [
             crate::gui::Section(vec![$($($top_widgets    ),*)?]),
             crate::gui::Section(vec![$($($center_widgets ),*)?]),
             crate::gui::Section(vec![$($($bottom_widgets ),*)?]),
@@ -102,7 +102,7 @@ pub mod ui_presets {
     use macroquad::math::Vec2;
 
     use super::{
-        button, button_with_abs_size, quit_all, ui_elements::label::Label, Button, MainUi, Widget,
+        button, button_with_abs_size, button_with_rel_size, quit_all, ui_elements::label::Label, Button, MainUi, Widget
     };
     use crate::constants::*;
 
@@ -118,9 +118,8 @@ pub mod ui_presets {
                 ],
                 // Main window content
                 vertical![1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT;
-                    top: horizontal![0.5;
-                        center: button("Here", || println!("Here")),
-                        Widget::Button(Button::new(BUTTON_SIZE, "Here", || {}));
+                    top: horizontal![0.0;
+                        center: button("Here", || println!("Here"));
                     ];
                 ],
                 // Footer
@@ -134,16 +133,23 @@ pub mod ui_presets {
 
     #[allow(dead_code)]
     pub fn test() -> MainUi {
-        MainUi::new(horizontal![
-            1.0;
-            left:
-                button("left1", || println!("left1")),
-                button("left2", || println!("left2"));
-            center:
-                button("center1", || println!("center1"));
-            right:
-                button("right1", || println!("right1")),
-                button("right2", || println!("right2"));
+        MainUi::new(vertical![1.0;
+                top:
+                    button("left1", || println!("left1"));
+                center:
+                    // button_with_rel_size("vercenter2", || println!("center2"), 0.5, 0.25),
+                    button("left2", || println!("left2")),
+                    horizontal![0.0;
+                        left:
+                            button("l1", || println!("right1"));
+                        center:
+                            button("l2", || println!("right1"));
+                        right:
+                            button("l3", || println!("right1"));
+                    ];
+                bottom:
+                    button("right1", || println!("right1")),
+                    button("right2", || println!("right2"));
         ])
     }
 }

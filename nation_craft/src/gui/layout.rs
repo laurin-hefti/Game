@@ -1,3 +1,5 @@
+use core::panic;
+
 use log::warn;
 use macroquad::math::Vec2;
 
@@ -35,14 +37,18 @@ impl Layout {
         }
     }
 
+    pub fn children_size(&self, ref_size: &Vec2) -> Vec2 {
+        self.sections[0].abs_size(ref_size)
+            + self.sections[1].abs_size(ref_size)
+            + self.sections[2].abs_size(ref_size)
+    }
+
     #[cfg(debug_assertions)]
     pub fn check_for_size_overflow(&self, ref_size: &Vec2) {
         // Check that actual size of children isn't larger than available space
         {
             let available_size = self.size_percent_parent * *ref_size;
-            let children_size = self.sections[0].abs_size(ref_size)
-                + self.sections[1].abs_size(ref_size)
-                + self.sections[2].abs_size(ref_size);
+            let children_size = self.children_size(ref_size);
             match self.layout {
                 LayoutType::Free | LayoutType::Horizontal => {
                     if children_size.x > available_size.x {
@@ -68,35 +74,66 @@ impl Layout {
 
 impl UiElement for Layout {
     fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
-        let ref_size = self.size_percent_parent * *ref_size;
+        let actual_size = self.abs_size(ref_size);
 
-
-        // In which direction to advance the cursor (free probably not working)
         let mask = match self.layout {
             LayoutType::Free => Vec2::ONE,
             LayoutType::Horizontal => Vec2::X,
             LayoutType::Vertical => Vec2::Y,
         };
 
+        // First section
         let mut cursor_pos = pos.clone();
         for child in self.sections[0].0.iter() {
-            // Draw
-            child.draw(&ref_size, &cursor_pos);
-            cursor_pos += child.abs_size(&ref_size) * mask;
+            child.draw(&actual_size, &cursor_pos);
+            cursor_pos += child.abs_size(&actual_size) * mask;
         }
 
-        cursor_pos = (ref_size - self.sections[1].abs_size(&ref_size)) * 0.5 * mask;
+        // Center section
+        //
+        // Advance only in x or y
+        let maybe_new_pos = (*ref_size - self.sections[1].abs_size(&actual_size)) * 0.5 * mask;
+        match self.layout {
+            LayoutType::Free | LayoutType::Horizontal => {
+                cursor_pos.x = maybe_new_pos.x;
+            }
+            LayoutType::Vertical => {
+                cursor_pos.y = maybe_new_pos.y;
+            }
+        }
         for child in self.sections[1].0.iter() {
-            // Draw
-            child.draw(&ref_size, &cursor_pos);
-            cursor_pos += child.abs_size(&ref_size) * mask;
+            child.draw(&actual_size, &cursor_pos);
+            cursor_pos += child.abs_size(&actual_size) * mask;
         }
 
-        cursor_pos = (ref_size - self.sections[2].abs_size(&ref_size)) * mask;
+        // Last section
+        //
+        // Advance only in x or y
+        let maybe_new_pos = (*ref_size - self.sections[2].abs_size(&actual_size)) * mask;
+        match self.layout {
+            LayoutType::Free | LayoutType::Horizontal => {
+                cursor_pos.x = maybe_new_pos.x;
+            }
+            LayoutType::Vertical => {
+                cursor_pos.y = maybe_new_pos.y;
+            }
+        }
         for child in self.sections[2].0.iter() {
-            // Draw
-            child.draw(&ref_size, &cursor_pos);
-            cursor_pos += child.abs_size(&ref_size) * mask;
+            child.draw(&actual_size, &cursor_pos);
+            cursor_pos += child.abs_size(&actual_size) * mask;
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            let size = self.abs_size(ref_size);
+            macroquad::prelude::draw_rectangle_lines(
+                pos.x,
+                pos.y,
+                size.x,
+                size.y,
+                1.0,
+                macroquad::prelude::BLACK,
+            );
         }
     }
 
@@ -108,7 +145,14 @@ impl UiElement for Layout {
         }
     }
 
-    fn abs_size(&self, parent_size: &Vec2) -> Vec2 {
-        self.size_percent_parent * *parent_size
+    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
+        let size = self.size_percent_parent * *ref_size;
+
+        match size.as_ivec2().into() {
+            (0, 0) => self.children_size(ref_size),
+            (0, _) => Vec2::new(size.x, self.children_size(ref_size).y),
+            (_, 0) => Vec2::new(self.children_size(ref_size).x, size.y),
+            _ => size,
+        }
     }
 }
