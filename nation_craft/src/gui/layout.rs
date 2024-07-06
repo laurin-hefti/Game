@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use log::warn;
 use macroquad::math::Vec2;
 
@@ -7,6 +9,15 @@ use super::{UiElement, Widget};
 pub enum LayoutType {
     Horizontal,
     Vertical,
+}
+
+impl Display for LayoutType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LayoutType::Horizontal => write!(f, "Horizontal"),
+            LayoutType::Vertical => write!(f, "Vertical"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -29,8 +40,8 @@ impl Layout {
     pub fn new(layout: LayoutType, size_percent_parent: Vec2, sections: [Section; 3]) -> Self {
         Self {
             layout,
-            sections,
             size_percent_parent,
+            sections,
         }
     }
 
@@ -127,7 +138,7 @@ impl UiElement for Layout {
         // Center section
         //
         // Advance only in x or y
-        let maybe_new_pos = (usable_space - self.sections[1].abs_size(&usable_space)) * 0.5;
+        let maybe_new_pos = *pos + (usable_space - self.sections[1].abs_size(&usable_space)) * 0.5;
         match self.layout {
             LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
@@ -144,7 +155,7 @@ impl UiElement for Layout {
         // Last section
         //
         // Advance only in x or y
-        let maybe_new_pos = usable_space - self.sections[2].abs_size(&usable_space);
+        let maybe_new_pos = *pos + usable_space - self.sections[2].abs_size(&usable_space);
         match self.layout {
             LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
@@ -181,12 +192,8 @@ impl UiElement for Layout {
                     1.0,
                     macroquad::prelude::ORANGE,
                 );
-                let layout_type = match self.layout {
-                    LayoutType::Horizontal => "Horizontal",
-                    LayoutType::Vertical => "Vertical",
-                };
                 macroquad::prelude::draw_text(
-                    layout_type,
+                    self.layout.to_string().as_str(),
                     pos.x + usable_space.x * 0.5,
                     pos.y + usable_space.y * 0.5,
                     20.0,
@@ -211,7 +218,7 @@ impl UiElement for Layout {
             (0, 0) => self.children_size(available_space),
             (0, _) => Vec2::new(self.children_size(available_space).x, size.y),
             (_, 0) => Vec2::new(size.x, self.children_size(available_space).y),
-            _ => size,
+            (_, _) => size,
         }
     }
 }

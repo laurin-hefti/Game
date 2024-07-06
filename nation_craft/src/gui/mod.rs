@@ -96,6 +96,12 @@ macro_rules! vert_centered {
     };
 }
 
+macro_rules! horiz_centered {
+    ($($widgets:expr),*) => {
+        horizontal!(width: PARENT, height: FIT_CONTENT, center: $($widgets),*;)
+    };
+}
+
 fn button_with_rel_size<N: Into<f32>>(text: &str, on_click: fn(), x: N, y: N) -> Widget {
     Widget::Button(Button::new(Vec2::new(x.into(), y.into()), text, on_click))
 }
@@ -117,7 +123,7 @@ const FIT_CONTENT: f32 = 0.0;
 
 pub mod ui_presets {
 
-    use super::{button, button_with_abs_size, label, quit_all, MainUi, PARENT, FIT_CONTENT};
+    use super::{button, button_with_abs_size, label, quit_all, MainUi, FIT_CONTENT, PARENT};
     use crate::constants::*;
 
     #[allow(dead_code)]
@@ -129,7 +135,9 @@ pub mod ui_presets {
                 horizontal![
                     width: PARENT,
                     height: TITLE_BAR_HEIGHT,
-                    left: button("Profile", || println!("Profile"));
+                    left:
+                        button("Profile", || println!("Profile")),
+                        button("Settings", || println!("Settings"));
                     center: button("Stats", || println!("Stats"));
                     right: button_with_abs_size("X", quit_all, 50.0, 50.0)
                 ],
@@ -154,23 +162,34 @@ pub mod ui_presets {
     #[allow(dead_code)]
     pub fn test() -> MainUi {
         MainUi::new(vertical![
-                width: PARENT, height: PARENT,
-                top:
-                    horizontal![
-                        width: PARENT, height: 0.2,
-                        left:
-                            button("left1", || println!("left1"));
-                        center:
-                            button("center", || println!("center"));
-                        right:
-                            button("right1", || println!("right1")),
-                            button("right2", || println!("right2"));
-                    ];
+        width: PARENT, height: PARENT,
+        top:
+            horizontal![
+                width: PARENT,
+                height: TITLE_BAR_HEIGHT,
+                left:
+                    button("left1", || println!("left1")),
+                    button("left1", || println!("left1"));
                 center:
                     button("center", || println!("center"));
-                bottom:
-                    button("bottom1", || println!("right1")),
-                    button("bottom2", || println!("right2"));
+                right:
+                    button_with_abs_size("X", quit_all, 50.0, 50.0);
+            ],
+            horizontal![
+                width: PARENT, height: 1.0 - 0.1,
+                center:
+                    vert_centered![button("left2", || println!("left2"))];
+            ];
+        center:
+            button("center", || println!("center"));
+        bottom:
+            horizontal![
+                width: PARENT,
+                height: BOTTOM_BAR_HEIGHT,
+                left:
+                    label("Nation Craft", 0.5, 1.0),
+                    label("By LH && LH", 0.5, 1.0);
+            ];
         ])
     }
 }
