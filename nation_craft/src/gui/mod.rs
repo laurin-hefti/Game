@@ -15,7 +15,7 @@ pub use widget::Widget;
 use crate::{constants::BUTTON_SIZE, Vec2, GLOBAL_SETTINGS};
 use macroquad::window::{screen_height, screen_width};
 
-use self::layout::Section;
+use self::{layout::Section, ui_elements::label::Label};
 
 #[derive(Debug)]
 pub struct MainUi {
@@ -55,33 +55,44 @@ pub fn quit_all() {
 
 #[macro_export]
 macro_rules! horizontal {
-    ($width:expr;
+    (width: $width:expr,
+     height: $height:expr,
      $(left  : $($left_widgets  :expr),* ;)?
      $(center: $($center_widgets:expr),* ;)?
      $(right : $($right_widgets :expr),* $(;)? )?) => {
         crate::gui::Widget::Layout(crate::gui::Layout::new(
             crate::gui::LayoutType::Horizontal,
-            crate::Vec2::new($width, 1.0), [
-            crate::gui::Section(vec![$($($left_widgets  ),*)?]),
-            crate::gui::Section(vec![$($($center_widgets),*)?]),
-            crate::gui::Section(vec![$($($right_widgets ),*)?]),
+            crate::Vec2::new($width, $height), [
+            crate::gui::Section(vec![$($( $left_widgets   ),*)?]),
+            crate::gui::Section(vec![$($( $center_widgets ),*)?]),
+            crate::gui::Section(vec![$($( $right_widgets  ),*)?]),
         ]))
     };
 }
 
 #[macro_export]
 macro_rules! vertical {
-    ($height:expr;
+    (width: $width:expr,
+     height: $height:expr,
+
      $(top   : $($top_widgets    :expr),* ;)?
      $(center: $($center_widgets :expr),* ;)?
      $(bottom: $($bottom_widgets :expr),* $(;)? )?) => {
         crate::gui::Widget::Layout(crate::gui::Layout::new(
             crate::gui::LayoutType::Vertical,
-            crate::Vec2::new(1.0, $height), [
-            crate::gui::Section(vec![$($($top_widgets    ),*)?]),
-            crate::gui::Section(vec![$($($center_widgets ),*)?]),
-            crate::gui::Section(vec![$($($bottom_widgets ),*)?]),
+            crate::Vec2::new($width, $height), [
+
+            crate::gui::Section(vec![$($( $top_widgets    ),*)?]),
+            crate::gui::Section(vec![$($( $center_widgets ),*)?]),
+            crate::gui::Section(vec![$($( $bottom_widgets ),*)?]),
         ]))
+    };
+}
+
+#[macro_export]
+macro_rules! vert_centered {
+    ($($widgets:expr),*) => {
+        vertical!(width: FIT_CONTENT, height: PARENT, center: $($widgets),*;)
     };
 }
 
@@ -97,59 +108,69 @@ fn button(text: &str, on_click: fn()) -> Widget {
     Widget::Button(Button::new(BUTTON_SIZE, text, on_click).use_abs_size())
 }
 
+fn label(text: &str, x: f32, y: f32) -> Widget {
+    Widget::Label(Label::new(Vec2::new(x, y), text))
+}
+
+const PARENT: f32 = 1.0;
+const FIT_CONTENT: f32 = 0.0;
+
 pub mod ui_presets {
 
-    use macroquad::math::Vec2;
-
-    use super::{
-        button, button_with_abs_size, button_with_rel_size, quit_all, ui_elements::label::Label, Button, MainUi, Widget
-    };
+    use super::{button, button_with_abs_size, label, quit_all, MainUi, PARENT, FIT_CONTENT};
     use crate::constants::*;
 
     #[allow(dead_code)]
     pub fn default_ui() -> MainUi {
-        MainUi::new(vertical![1.0;
+        MainUi::new(vertical![
+            width: PARENT, height: PARENT,
             top:
                 // Title bar
-                horizontal![TITLE_BAR_HEIGHT;
+                horizontal![
+                    width: PARENT,
+                    height: TITLE_BAR_HEIGHT,
                     left: button("Profile", || println!("Profile"));
                     center: button("Stats", || println!("Stats"));
                     right: button_with_abs_size("X", quit_all, 50.0, 50.0)
                 ],
                 // Main window content
-                vertical![1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT;
-                    top: horizontal![0.0;
-                        center: button("Here", || println!("Here"));
-                    ];
-                ],
+                horizontal![
+                    width: PARENT,
+                    height: 1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT,
+                    center: vert_centered![button("Here", || println!("Here"))];
+                ];
                 // Footer
-                horizontal![BOTTOM_BAR_HEIGHT;
+            bottom:
+                horizontal![
+                    width: PARENT,
+                    height: BOTTOM_BAR_HEIGHT,
                     left:
-                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Nation Craft")),
-                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Made by LH&LH"));
+                        label("Nation Craft", 0.5, 1.0),
+                        label("By LH && LH", 0.5, 1.0);
                 ];
         ])
     }
 
     #[allow(dead_code)]
     pub fn test() -> MainUi {
-        MainUi::new(vertical![1.0;
+        MainUi::new(vertical![
+                width: PARENT, height: PARENT,
                 top:
-                    button("left1", || println!("left1"));
-                center:
-                    // button_with_rel_size("vercenter2", || println!("center2"), 0.5, 0.25),
-                    button("left2", || println!("left2")),
-                    horizontal![0.0;
+                    horizontal![
+                        width: PARENT, height: 0.2,
                         left:
-                            button("l1", || println!("right1"));
+                            button("left1", || println!("left1"));
                         center:
-                            button("l2", || println!("right1"));
+                            button("center", || println!("center"));
                         right:
-                            button("l3", || println!("right1"));
+                            button("right1", || println!("right1")),
+                            button("right2", || println!("right2"));
                     ];
+                center:
+                    button("center", || println!("center"));
                 bottom:
-                    button("right1", || println!("right1")),
-                    button("right2", || println!("right2"));
+                    button("bottom1", || println!("right1")),
+                    button("bottom2", || println!("right2"));
         ])
     }
 }

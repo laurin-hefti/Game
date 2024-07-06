@@ -1,5 +1,3 @@
-use core::panic;
-
 use log::warn;
 use macroquad::math::Vec2;
 
@@ -9,7 +7,6 @@ use super::{UiElement, Widget};
 pub enum LayoutType {
     Horizontal,
     Vertical,
-    Free,
 }
 
 #[derive(Debug)]
@@ -38,9 +35,49 @@ impl Layout {
     }
 
     pub fn children_size(&self, ref_size: &Vec2) -> Vec2 {
-        self.sections[0].abs_size(ref_size)
-            + self.sections[1].abs_size(ref_size)
-            + self.sections[2].abs_size(ref_size)
+        match self.layout {
+            LayoutType::Horizontal => Vec2 {
+                x: if !self.sections[2].0.is_empty() {
+                    // If there is a right section => it spans all the available space in width
+                    ref_size.x
+                } else if !self.sections[1].0.is_empty() {
+                    // If there is no right section, but a center section
+                    // => it spans until the last element of the center section
+                    (ref_size.x + self.sections[1].abs_size(ref_size).x) * 0.5
+                } else {
+                    // If there is no right section and no center section
+                    // => it spans only as far as the elements in the left section
+                    self.sections[0].abs_size(ref_size).x
+                },
+
+                // y is max of all heights
+                y: self.sections[0]
+                    .abs_size(ref_size)
+                    .y
+                    .max(self.sections[1].abs_size(ref_size).y)
+                    .max(self.sections[2].abs_size(ref_size).y),
+            },
+
+            LayoutType::Vertical => Vec2 {
+                // x is max of all widths
+                x: self.sections[0]
+                    .abs_size(ref_size)
+                    .x
+                    .max(self.sections[1].abs_size(ref_size).x)
+                    .max(self.sections[2].abs_size(ref_size).x),
+
+                y: if !self.sections[2].0.is_empty() {
+                    // Exists bottom_section? => height = height of available space
+                    ref_size.y
+                } else if !self.sections[1].0.is_empty() {
+                    // Exists center_section? => height = max y of lowest element in center section
+                    (ref_size.y + self.sections[1].abs_size(ref_size).y) * 0.5
+                } else {
+                    // No center_section? => height = height of left_section
+                    self.sections[0].abs_size(ref_size).y
+                },
+            },
+        }
     }
 
     #[cfg(debug_assertions)]
@@ -50,7 +87,7 @@ impl Layout {
             let available_size = self.size_percent_parent * *ref_size;
             let children_size = self.children_size(ref_size);
             match self.layout {
-                LayoutType::Free | LayoutType::Horizontal => {
+                LayoutType::Horizontal => {
                     if children_size.x > available_size.x {
                         warn!(
                             "Layout content width is too large (x: {} > {})",
@@ -59,7 +96,6 @@ impl Layout {
                     }
                 }
                 LayoutType::Vertical => {
-                    // TODO: also check for free
                     if children_size.y > available_size.y {
                         warn!(
                             "Layout content height is too large (y: {} > {})",
@@ -73,11 +109,10 @@ impl Layout {
 }
 
 impl UiElement for Layout {
-    fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
-        let actual_size = self.abs_size(ref_size);
+    fn draw(&self, available_space: &Vec2, pos: &Vec2) {
+        let usable_space = self.abs_size(available_space);
 
         let mask = match self.layout {
-            LayoutType::Free => Vec2::ONE,
             LayoutType::Horizontal => Vec2::X,
             LayoutType::Vertical => Vec2::Y,
         };
@@ -85,16 +120,16 @@ impl UiElement for Layout {
         // First section
         let mut cursor_pos = pos.clone();
         for child in self.sections[0].0.iter() {
-            child.draw(&actual_size, &cursor_pos);
-            cursor_pos += child.abs_size(&actual_size) * mask;
+            child.draw(&usable_space, &cursor_pos);
+            cursor_pos += child.abs_size(&usable_space) * mask;
         }
 
         // Center section
         //
         // Advance only in x or y
-        let maybe_new_pos = (*ref_size - self.sections[1].abs_size(&actual_size)) * 0.5 * mask;
+        let maybe_new_pos = (usable_space - self.sections[1].abs_size(&usable_space)) * 0.5;
         match self.layout {
-            LayoutType::Free | LayoutType::Horizontal => {
+            LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
             }
             LayoutType::Vertical => {
@@ -102,16 +137,16 @@ impl UiElement for Layout {
             }
         }
         for child in self.sections[1].0.iter() {
-            child.draw(&actual_size, &cursor_pos);
-            cursor_pos += child.abs_size(&actual_size) * mask;
+            child.draw(&usable_space, &cursor_pos);
+            cursor_pos += child.abs_size(&usable_space) * mask;
         }
 
         // Last section
         //
         // Advance only in x or y
-        let maybe_new_pos = (*ref_size - self.sections[2].abs_size(&actual_size)) * mask;
+        let maybe_new_pos = usable_space - self.sections[2].abs_size(&usable_space);
         match self.layout {
-            LayoutType::Free | LayoutType::Horizontal => {
+            LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
             }
             LayoutType::Vertical => {
@@ -119,21 +154,45 @@ impl UiElement for Layout {
             }
         }
         for child in self.sections[2].0.iter() {
-            child.draw(&actual_size, &cursor_pos);
-            cursor_pos += child.abs_size(&actual_size) * mask;
+            child.draw(&usable_space, &cursor_pos);
+            cursor_pos += child.abs_size(&usable_space) * mask;
         }
 
         #[cfg(debug_assertions)]
         {
-            let size = self.abs_size(ref_size);
-            macroquad::prelude::draw_rectangle_lines(
-                pos.x,
-                pos.y,
-                size.x,
-                size.y,
-                1.0,
-                macroquad::prelude::BLACK,
-            );
+            assert_ne!(usable_space.x, 0.0);
+            assert_ne!(usable_space.y, 0.0);
+            if log::log_enabled!(log::Level::Error) {
+                macroquad::prelude::draw_rectangle_lines(
+                    pos.x,
+                    pos.y,
+                    usable_space.x,
+                    usable_space.y,
+                    2.0,
+                    macroquad::prelude::RED,
+                );
+            }
+            if log::log_enabled!(log::Level::Debug) {
+                macroquad::prelude::draw_line(
+                    pos.x,
+                    pos.y,
+                    pos.x + usable_space.x,
+                    pos.y + usable_space.y,
+                    1.0,
+                    macroquad::prelude::ORANGE,
+                );
+                let layout_type = match self.layout {
+                    LayoutType::Horizontal => "Horizontal",
+                    LayoutType::Vertical => "Vertical",
+                };
+                macroquad::prelude::draw_text(
+                    layout_type,
+                    pos.x + usable_space.x * 0.5,
+                    pos.y + usable_space.y * 0.5,
+                    20.0,
+                    macroquad::prelude::RED,
+                );
+            }
         }
     }
 
@@ -145,13 +204,13 @@ impl UiElement for Layout {
         }
     }
 
-    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
-        let size = self.size_percent_parent * *ref_size;
+    fn abs_size(&self, available_space: &Vec2) -> Vec2 {
+        let size = self.size_percent_parent * *available_space;
 
         match size.as_ivec2().into() {
-            (0, 0) => self.children_size(ref_size),
-            (0, _) => Vec2::new(size.x, self.children_size(ref_size).y),
-            (_, 0) => Vec2::new(self.children_size(ref_size).x, size.y),
+            (0, 0) => self.children_size(available_space),
+            (0, _) => Vec2::new(self.children_size(available_space).x, size.y),
+            (_, 0) => Vec2::new(size.x, self.children_size(available_space).y),
             _ => size,
         }
     }

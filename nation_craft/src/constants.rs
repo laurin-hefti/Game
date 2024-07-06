@@ -9,8 +9,8 @@ pub const FG_COLOR_PRIMARY: Color = WHITE;
 pub const FG_COLOR_DARKER: Color = color_u8!(200, 200, 200, 255);
 
 pub const BUTTON_SIZE: Vec2 = Vec2::new(100.0, 40.0);
-pub const TITLE_BAR_HEIGHT: f32 = 0.03;
-pub const BOTTOM_BAR_HEIGHT: f32 = 0.03;
+pub const TITLE_BAR_HEIGHT: f32 = 0.05;
+pub const BOTTOM_BAR_HEIGHT: f32 = 0.05;
 
 pub const POPUP_MARGIN: RectOffset = RectOffset {
     left: 10.0,

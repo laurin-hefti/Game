@@ -46,7 +46,7 @@ async fn main() {
         .screen_size = screen_size;
 
     // Which preset to use (a test or the default)
-    let mut gui = ui_presets::test();
+    let mut gui = ui_presets::default_ui();
     #[cfg(debug_assertions)]
     gui.check_for_size_overflow(&screen_size);
 

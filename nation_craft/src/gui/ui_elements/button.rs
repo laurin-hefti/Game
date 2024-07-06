@@ -26,10 +26,10 @@ impl Button {
 }
 
 impl UiElement for Button {
-    fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
+    fn draw(&self, available_space: &Vec2, pos: &Vec2) {
         if ui::widgets::Button::new(self.text.clone())
             .position(pos.clone())
-            .size(self.abs_size(ref_size))
+            .size(self.abs_size(available_space))
             .ui(&mut ui::root_ui())
         {
             (self.callback)();
@@ -40,13 +40,13 @@ impl UiElement for Button {
         /* Handled in draw */
     }
 
-    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
+    fn abs_size(&self, available_space: &Vec2) -> Vec2 {
         if self.use_abs_size {
             // Size is already absolute
             self.size
         } else {
             // Size is relative
-            self.size * *ref_size
+            self.size * *available_space
         }
     }
 }
