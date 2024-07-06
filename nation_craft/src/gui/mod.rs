@@ -15,19 +15,17 @@ pub use widget::Widget;
 use crate::{constants::BUTTON_SIZE, Vec2, GLOBAL_SETTINGS};
 use macroquad::window::{screen_height, screen_width};
 
+use self::layout::Section;
+
 #[derive(Debug)]
 pub struct MainUi {
     root_layout: Layout,
 }
 
 impl MainUi {
-    pub fn new(root_layout: Layout) -> Self {
-        Self { root_layout }
-    }
-
-    pub fn from_widgets_vertical<T: Into<Vec<Widget>>>(widgets: T) -> Self {
+    pub fn new(root_layout: impl Into<Layout>) -> Self {
         Self {
-            root_layout: Layout::new(LayoutType::Vertical, widgets.into(), Vec2::new(1.0, 1.0)),
+            root_layout: root_layout.into(),
         }
     }
 
@@ -56,24 +54,34 @@ pub fn quit_all() {
 }
 
 #[macro_export]
-macro_rules! layout {
-    (horizontal, $width:expr, $( $widgets:expr ),* $(,)? ) => {
-        Widget::Layout(Layout::new(
-            LayoutType::Horizontal,
-            Vec::from([
-                $($widgets,)*
-            ]),
-            Vec2::new($width, 1.0),
-        ))
+macro_rules! horizontal {
+    ($width:expr;
+     $(left  : $($left_widgets  :expr),* ;)?
+     $(center: $($center_widgets:expr),* ;)?
+     $(right : $($right_widgets :expr),* $(;)? )?) => {
+        crate::gui::Widget::Layout(crate::gui::Layout::new(
+            crate::gui::LayoutType::Horizontal,
+            crate::Vec2::new($width, 1.0), [
+            crate::gui::Section(vec![$($($left_widgets  ),*)?]),
+            crate::gui::Section(vec![$($($center_widgets),*)?]),
+            crate::gui::Section(vec![$($($right_widgets ),*)?]),
+        ]))
     };
-    (vertical, $height:expr, $( $widgets:expr ),* $(,)? ) => {
-        Widget::Layout(Layout::new(
-            LayoutType::Vertical,
-            Vec::from([
-                $($widgets,)*
-            ]),
-            Vec2::new(1.0, $height),
-        ))
+}
+
+#[macro_export]
+macro_rules! vertical {
+    ($height:expr;
+     $(top   : $($top_widgets    :expr),* ;)?
+     $(center: $($center_widgets :expr),* ;)?
+     $(bottom: $($bottom_widgets :expr),* $(;)? )?) => {
+        crate::gui::Widget::Layout(crate::gui::Layout::new(
+            crate::gui::LayoutType::Horizontal,
+            crate::Vec2::new($height, 1.0), [
+            crate::gui::Section(vec![$($($top_widgets    ),*)?]),
+            crate::gui::Section(vec![$($($center_widgets ),*)?]),
+            crate::gui::Section(vec![$($($bottom_widgets ),*)?]),
+        ]))
     };
 }
 
@@ -90,66 +98,52 @@ fn button(text: &str, on_click: fn()) -> Widget {
 }
 
 pub mod ui_presets {
-    use crate::gui::button_with_abs_size;
+
     use macroquad::math::Vec2;
 
     use super::{
-        button, quit_all, ui_elements::label::Label, Button, Layout, LayoutType, MainUi, Widget,
+        button, button_with_abs_size, quit_all, ui_elements::label::Label, Button, MainUi, Widget,
     };
     use crate::constants::*;
 
     #[allow(dead_code)]
     pub fn default_ui() -> MainUi {
-        MainUi::from_widgets_vertical([
-            // Title bar
-            layout![
-                horizontal,
-                TITLE_BAR_HEIGHT,
-                // Left group (player profile button)
-                button("Profile", || println!("Profile")),
-                Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
-                // Middle Group (for stats and stuff)
-                button("Stats", || println!("Stats")),
-                Widget::SpacerPercent((1.0 - 0.1 - 0.1 - 0.03) * 0.5),
-                // Right group (close window button)
-                button_with_abs_size("X", quit_all, 50.0, 50.0),
-            ],
-            // Main window content
-            layout![
-                vertical,
-                1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT,
-                Widget::SpacerPercent(0.1),
-                layout![
-                    horizontal,
-                    1.0,
-                    Widget::Button(Button::new(BUTTON_SIZE, "Here", || {})),
-                    Widget::Button(Button::new(BUTTON_SIZE, "Here", || {}))
-                ]
-            ],
-            // Footer
-            layout![
-                horizontal,
-                BOTTOM_BAR_HEIGHT,
-                Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Nation Craft")),
-                Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Made by LH&LH")),
-            ],
+        MainUi::new(vertical![1.0;
+            top:
+                // Title bar
+                horizontal![TITLE_BAR_HEIGHT;
+                    left: button("Profile", || println!("Profile"));
+                    center: button("Stats", || println!("Stats"));
+                    right: button_with_abs_size("X", quit_all, 50.0, 50.0)
+                ],
+                // Main window content
+                vertical![1.0 - TITLE_BAR_HEIGHT - BOTTOM_BAR_HEIGHT;
+                    top: horizontal![0.5;
+                        center: button("Here", || println!("Here")),
+                        Widget::Button(Button::new(BUTTON_SIZE, "Here", || {}));
+                    ];
+                ],
+                // Footer
+                horizontal![BOTTOM_BAR_HEIGHT;
+                    left:
+                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Nation Craft")),
+                        Widget::Label(Label::new(Vec2::new(0.5, 1.0), "Made by LH&LH"));
+                ];
         ])
     }
 
     #[allow(dead_code)]
-    pub fn layout_test_ui() -> MainUi {
-        MainUi::from_widgets_vertical([
-            Widget::SpacerPercent(0.2),
-            Widget::Button(
-                Button::new(BUTTON_SIZE, "Click me", || println!("Clicked")).use_abs_size(),
-            ),
-            Widget::SpacerPercent(0.2),
-            Widget::Button(
-                Button::new(BUTTON_SIZE, "Second", || println!("Second")).use_abs_size(),
-            ),
-            Widget::Button(Button::new(BUTTON_SIZE, "Third", || println!("third")).use_abs_size()),
-            Widget::SpacerPercent(0.2),
-            Widget::Button(Button::new(BUTTON_SIZE, "uraa", || println!("uraa")).use_abs_size()),
+    pub fn test() -> MainUi {
+        MainUi::new(horizontal![
+            1.0;
+            left:
+                button("left1", || println!("left1")),
+                button("left2", || println!("left2"));
+            center:
+                button("center1", || println!("center1"));
+            right:
+                button("right1", || println!("right1")),
+                button("right2", || println!("right2"));
         ])
     }
 }

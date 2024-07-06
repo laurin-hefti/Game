@@ -1,3 +1,5 @@
+#![feature(coroutines)]
+
 mod constants;
 mod gui;
 
@@ -7,12 +9,6 @@ use macroquad::{prelude::*, ui::root_ui};
 use std::sync::Mutex;
 
 use crate::gui::style_collection;
-
-mod locic;
-use crate::locic::*;
-
-
-const LAURINWILLNURTESTEN: bool = true;
 
 pub struct GuiSettings {
     pub screen_size: Vec2,
@@ -30,15 +26,6 @@ static GLOBAL_SETTINGS: Mutex<Settings> = Mutex::new(Settings {
 
 #[macroquad::main("Nation Craft")]
 async fn main() {
-    if LAURINWILLNURTESTEN {
-        
-        let w0: locic::World<2,1,4,0,1,1> = newWorld(getResource(defaultWorldResources),Map1, defaultPlayerSet);
-        //let w1 = initWorld![iron];
-        println!("{}", w0.avaliableResources[1].name);
-
-        std::process::exit(0);
-    }
-
     // Set up logging system
     {
         let env = env_logger::Env::default()
@@ -59,7 +46,7 @@ async fn main() {
         .screen_size = screen_size;
 
     // Which preset to use (a test or the default)
-    let mut gui = ui_presets::default_ui();
+    let mut gui = ui_presets::test();
     #[cfg(debug_assertions)]
     gui.check_for_size_overflow(&screen_size);
 
