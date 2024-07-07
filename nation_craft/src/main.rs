@@ -1,28 +1,15 @@
 #![feature(coroutines)]
 
-mod constants;
 mod gui;
+mod traits;
+mod constants;
+mod settings;
 
 use constants::BG_COLOR_PRIMARY;
 use gui::ui_presets;
-use macroquad::{prelude::*, ui::root_ui};
-use std::sync::Mutex;
+use macroquad::{miniquad::window::screen_size, prelude::*, ui::root_ui};
 
-use crate::gui::style_collection;
-
-pub struct GuiSettings {
-    pub screen_size: Vec2,
-}
-
-pub struct Settings {
-    gui: GuiSettings,
-}
-
-static GLOBAL_SETTINGS: Mutex<Settings> = Mutex::new(Settings {
-    gui: GuiSettings {
-        screen_size: Vec2::ZERO,
-    },
-});
+use crate::gui::style::style_collection;
 
 #[macroquad::main("Nation Craft")]
 async fn main() {
@@ -38,27 +25,25 @@ async fn main() {
 
     // Draw one frame to get the screen size
     next_frame().await;
-    let screen_size = Vec2::new(screen_width(), screen_height());
-    GLOBAL_SETTINGS
-        .lock()
-        .expect("Couldn't acquire lock")
-        .gui
-        .screen_size = screen_size;
+    let window_size = Vec2::from(screen_size());
 
     // Which preset to use (a test or the default)
     let mut gui = ui_presets::default_ui();
     #[cfg(debug_assertions)]
-    gui.check_for_size_overflow(&screen_size);
+    gui.check_for_size_overflow(window_size);
 
     // Style
-    let skin = style_collection::default_skin();
+    let skin = style_collection::default_skin(window_size);
     root_ui().push_skin(&skin);
 
     // Main loop
     loop {
+        let screen_size = Vec2::from(screen_size());
+
         clear_background(BG_COLOR_PRIMARY);
+        gui.draw(screen_size);
+
         gui.update();
-        gui.draw();
 
         // Check for low FPS in debug builds
         #[cfg(debug_assertions)]

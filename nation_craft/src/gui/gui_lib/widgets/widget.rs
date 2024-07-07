@@ -1,8 +1,11 @@
 use log::warn;
 
-use super::{ui_elements::label::Label, Button, Layout, UiElement};
+use super::{
+    Button, Label, Layout,
+    layout::{LayoutType, Section},
+};
 use crate::{
-    gui::{layout::Section, LayoutType},
+    traits::{Drawable, UiElement},
     Vec2,
 };
 
@@ -14,8 +17,8 @@ pub enum Widget {
     SpacerPercent(f32),
 }
 
-impl UiElement for Widget {
-    fn draw(&self, ref_size: &Vec2, pos: &Vec2) {
+impl Drawable for Widget {
+    fn draw(&self, ref_size: Vec2, pos: Vec2) {
         match self {
             Widget::Layout(widget) => widget.draw(ref_size, pos),
             Widget::Button(button) => button.draw(ref_size, pos),
@@ -23,7 +26,9 @@ impl UiElement for Widget {
             Widget::SpacerPercent(_) => {}
         }
     }
+}
 
+impl UiElement for Widget {
     fn update(&mut self) {
         match self {
             Widget::Layout(widget) => widget.update(),
@@ -33,12 +38,12 @@ impl UiElement for Widget {
         }
     }
 
-    fn abs_size(&self, ref_size: &Vec2) -> Vec2 {
+    fn abs_size(&self, ref_size: Vec2) -> Vec2 {
         match self {
             Widget::Layout(widget) => widget.abs_size(ref_size),
             Widget::Button(button) => button.abs_size(ref_size),
             Widget::Label(label) => label.abs_size(ref_size),
-            Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * *ref_size,
+            Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * ref_size,
         }
     }
 }

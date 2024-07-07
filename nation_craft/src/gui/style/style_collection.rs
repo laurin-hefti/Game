@@ -1,18 +1,14 @@
+use crate::Vec2;
 use macroquad::{
-    math::RectOffset, texture::Image, ui::{self, root_ui, Skin}
+    math::RectOffset,
+    texture::Image,
+    ui::{self, root_ui, Skin},
 };
 
-use crate::GLOBAL_SETTINGS;
 use crate::constants::*;
 
-pub fn default_skin() -> ui::Skin {
-    let window_size = GLOBAL_SETTINGS
-        .lock()
-        .expect("Couldn't aquire lock")
-        .gui
-        .screen_size;
-
-    let window_style = root_ui()
+pub fn default_window_style(window_size: Vec2) -> ui::Style {
+    root_ui()
         .style_builder()
         .background_margin(POPUP_MARGIN)
         .margin(POPUP_MARGIN)
@@ -20,11 +16,12 @@ pub fn default_skin() -> ui::Skin {
         .background(Image::gen_image_color(
             window_size.x as u16,
             window_size.y as u16,
-            BG_COLOR_PRIMARY
+            BG_COLOR_PRIMARY,
         ))
-        .build();
-
-    let label_style = root_ui()
+        .build()
+}
+pub fn default_label_style(window_size: Vec2) -> ui::Style {
+    root_ui()
         .style_builder()
         .font_size(FONT_SIZE)
         .text_color(FG_COLOR_PRIMARY)
@@ -33,9 +30,11 @@ pub fn default_skin() -> ui::Skin {
             BUTTON_SIZE.y as u16,
             BG_COLOR_PRIMARY,
         ))
-        .build();
+        .build()
+}
 
-    let button_style = root_ui()
+pub fn default_button_style(window_size: Vec2) -> ui::Style {
+    root_ui()
         .style_builder()
         .background_margin(RectOffset::new(8.0, 8.0, 8.0, 8.0))
         .text_color(FG_COLOR_PRIMARY)
@@ -49,20 +48,22 @@ pub fn default_skin() -> ui::Skin {
         .background_hovered(Image::gen_image_color(
             BUTTON_SIZE.x as u16,
             BUTTON_SIZE.y as u16,
-            BG_COLOR_DARKEST
+            BG_COLOR_DARKEST,
         ))
         .background_clicked(Image::gen_image_color(
             BUTTON_SIZE.x as u16,
             BUTTON_SIZE.y as u16,
-            BG_COLOR_DARKER
+            BG_COLOR_DARKER,
         ))
         .font_size(FONT_SIZE)
-        .build();
+        .build()
+}
 
+pub fn default_skin(window_size: Vec2) -> ui::Skin {
     Skin {
-        label_style,
-        button_style,
-        window_style,
+        label_style: default_label_style(window_size),
+        button_style: default_button_style(window_size),
+        window_style: default_window_style(window_size),
         ..root_ui().default_skin()
     }
 }

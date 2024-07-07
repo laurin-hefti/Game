@@ -1,4 +1,7 @@
-use crate::{gui::UiElement, Vec2};
+use crate::{
+    Vec2,
+    traits::{Drawable, UiElement},
+};
 use macroquad::ui;
 
 #[derive(Debug)]
@@ -25,8 +28,8 @@ impl Button {
     }
 }
 
-impl UiElement for Button {
-    fn draw(&self, available_space: &Vec2, pos: &Vec2) {
+impl Drawable for Button {
+    fn draw(&self, available_space: Vec2, pos: Vec2) {
         if ui::widgets::Button::new(self.text.clone())
             .position(pos.clone())
             .size(self.abs_size(available_space))
@@ -35,18 +38,20 @@ impl UiElement for Button {
             (self.callback)();
         }
     }
+}
 
+impl UiElement for Button {
     fn update(&mut self) {
         /* Handled in draw */
     }
 
-    fn abs_size(&self, available_space: &Vec2) -> Vec2 {
+    fn abs_size(&self, available_space: Vec2) -> Vec2 {
         if self.use_abs_size {
             // Size is already absolute
             self.size
         } else {
             // Size is relative
-            self.size * *available_space
+            self.size * available_space
         }
     }
 }

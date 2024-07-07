@@ -1,9 +1,11 @@
+use crate::traits::{Drawable, UiElement};
 use std::fmt::Display;
 
 use log::warn;
 use macroquad::math::Vec2;
 
-use super::{UiElement, Widget};
+use super::Widget;
+
 
 #[derive(Debug)]
 pub enum LayoutType {
@@ -24,7 +26,7 @@ impl Display for LayoutType {
 pub struct Section(pub Vec<Widget>);
 
 impl Section {
-    pub fn abs_size(&self, parent_size: &Vec2) -> Vec2 {
+    pub fn abs_size(&self, parent_size: Vec2) -> Vec2 {
         self.0.iter().map(|child| child.abs_size(parent_size)).sum()
     }
 }
@@ -45,7 +47,7 @@ impl Layout {
         }
     }
 
-    pub fn children_size(&self, ref_size: &Vec2) -> Vec2 {
+    pub fn children_size(&self, ref_size: Vec2) -> Vec2 {
         match self.layout {
             LayoutType::Horizontal => Vec2 {
                 x: if !self.sections[2].0.is_empty() {
@@ -92,10 +94,10 @@ impl Layout {
     }
 
     #[cfg(debug_assertions)]
-    pub fn check_for_size_overflow(&self, ref_size: &Vec2) {
+    pub fn check_for_size_overflow(&self, ref_size: Vec2) {
         // Check that actual size of children isn't larger than available space
         {
-            let available_size = self.size_percent_parent * *ref_size;
+            let available_size = self.size_percent_parent * ref_size;
             let children_size = self.children_size(ref_size);
             match self.layout {
                 LayoutType::Horizontal => {
@@ -119,8 +121,8 @@ impl Layout {
     }
 }
 
-impl UiElement for Layout {
-    fn draw(&self, available_space: &Vec2, pos: &Vec2) {
+impl Drawable for Layout {
+    fn draw(&self, available_space: Vec2, pos: Vec2) {
         let usable_space = self.abs_size(available_space);
 
         let mask = match self.layout {
@@ -131,14 +133,14 @@ impl UiElement for Layout {
         // First section
         let mut cursor_pos = pos.clone();
         for child in self.sections[0].0.iter() {
-            child.draw(&usable_space, &cursor_pos);
-            cursor_pos += child.abs_size(&usable_space) * mask;
+            child.draw(usable_space, cursor_pos);
+            cursor_pos += child.abs_size(usable_space) * mask;
         }
 
         // Center section
         //
         // Advance only in x or y
-        let maybe_new_pos = *pos + (usable_space - self.sections[1].abs_size(&usable_space)) * 0.5;
+        let maybe_new_pos = pos + (usable_space - self.sections[1].abs_size(usable_space)) * 0.5;
         match self.layout {
             LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
@@ -148,14 +150,14 @@ impl UiElement for Layout {
             }
         }
         for child in self.sections[1].0.iter() {
-            child.draw(&usable_space, &cursor_pos);
-            cursor_pos += child.abs_size(&usable_space) * mask;
+            child.draw(usable_space, cursor_pos);
+            cursor_pos += child.abs_size(usable_space) * mask;
         }
 
         // Last section
         //
         // Advance only in x or y
-        let maybe_new_pos = *pos + usable_space - self.sections[2].abs_size(&usable_space);
+        let maybe_new_pos = pos + usable_space - self.sections[2].abs_size(usable_space);
         match self.layout {
             LayoutType::Horizontal => {
                 cursor_pos.x = maybe_new_pos.x;
@@ -165,8 +167,8 @@ impl UiElement for Layout {
             }
         }
         for child in self.sections[2].0.iter() {
-            child.draw(&usable_space, &cursor_pos);
-            cursor_pos += child.abs_size(&usable_space) * mask;
+            child.draw(usable_space, cursor_pos);
+            cursor_pos += child.abs_size(usable_space) * mask;
         }
 
         #[cfg(debug_assertions)]
@@ -202,7 +204,9 @@ impl UiElement for Layout {
             }
         }
     }
+}
 
+impl UiElement for Layout {
     fn update(&mut self) {
         for section in self.sections.iter_mut() {
             section.0.iter_mut().for_each(|child| {
@@ -211,8 +215,8 @@ impl UiElement for Layout {
         }
     }
 
-    fn abs_size(&self, available_space: &Vec2) -> Vec2 {
-        let size = self.size_percent_parent * *available_space;
+    fn abs_size(&self, available_space: Vec2) -> Vec2 {
+        let size = self.size_percent_parent * available_space;
 
         match size.as_ivec2().into() {
             (0, 0) => self.children_size(available_space),
