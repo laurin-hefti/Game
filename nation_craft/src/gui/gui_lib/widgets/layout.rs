@@ -175,7 +175,7 @@ impl Drawable for Layout {
         {
             assert_ne!(usable_space.x, 0.0);
             assert_ne!(usable_space.y, 0.0);
-            if log::log_enabled!(log::Level::Error) {
+            if log::log_enabled!(log::Level::Debug) {
                 macroquad::prelude::draw_rectangle_lines(
                     pos.x,
                     pos.y,

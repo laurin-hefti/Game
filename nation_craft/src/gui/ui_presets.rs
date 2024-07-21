@@ -1,5 +1,7 @@
+use macroquad::math::vec2;
+
 use super::{
-    button, button_with_abs_size, label, ui_building::constraints::PARENT, MainUi
+    button, button_with_abs_size, label, ui_building::{constraints::PARENT, popup_float}, MainUi
 };
 use crate::{
     horizontal, vert_centered, vertical,
@@ -17,6 +19,12 @@ pub fn default_ui() -> MainUi {
         vertical![
             width: PARENT, height: PARENT,
             top:
+                // Float popup
+                popup_float(
+                    button_with_abs_size("Popup", quit_all, 100.0, 100.0),
+                    vec2(100.0, 100.0),
+                    vec2(200.0, 200.0)
+                    ),
                 // Title bar
                 horizontal![
                     width: PARENT,

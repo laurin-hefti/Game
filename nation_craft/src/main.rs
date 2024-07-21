@@ -1,5 +1,3 @@
-#![feature(coroutines)]
-
 mod gui;
 mod traits;
 mod constants;

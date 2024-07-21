@@ -1,8 +1,7 @@
 use log::warn;
 
 use super::{
-    Button, Label, Layout,
-    layout::{LayoutType, Section},
+    layout::{LayoutType, Section}, Button, PopupFloat, Label, Layout
 };
 use crate::{
     traits::{Drawable, UiElement},
@@ -14,6 +13,7 @@ pub enum Widget {
     Layout(Layout),
     Button(Button),
     Label(Label),
+    PopupFloat(PopupFloat),
     SpacerPercent(f32),
 }
 
@@ -23,6 +23,7 @@ impl Drawable for Widget {
             Widget::Layout(widget) => widget.draw(ref_size, pos),
             Widget::Button(button) => button.draw(ref_size, pos),
             Widget::Label(label) => label.draw(ref_size, pos),
+            Widget::PopupFloat(popup) => popup.draw(ref_size, pos),
             Widget::SpacerPercent(_) => {}
         }
     }
@@ -34,6 +35,7 @@ impl UiElement for Widget {
             Widget::Layout(widget) => widget.update(),
             Widget::Button(button) => button.update(),
             Widget::Label(label) => label.update(),
+            Widget::PopupFloat(popup) => popup.update(),
             Widget::SpacerPercent(_) => {}
         }
     }
@@ -43,6 +45,7 @@ impl UiElement for Widget {
             Widget::Layout(widget) => widget.abs_size(ref_size),
             Widget::Button(button) => button.abs_size(ref_size),
             Widget::Label(label) => label.abs_size(ref_size),
+            Widget::PopupFloat(popup) => Vec2::ZERO,
             Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * ref_size,
         }
     }

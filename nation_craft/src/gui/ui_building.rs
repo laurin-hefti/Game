@@ -1,4 +1,4 @@
-use super::widgets::{Widget, Button, Label};
+use super::{widgets::{Button, Label, PopupFloat, Widget}, PARENT};
 use crate::{constants::BUTTON_SIZE, Vec2};
 
 pub mod constraints {
@@ -74,4 +74,13 @@ pub fn button(text: &str, on_click: fn()) -> Widget {
 #[allow(dead_code)]
 pub fn label(text: &str, x: f32, y: f32) -> Widget {
     Widget::Label(Label::new(Vec2::new(x, y), text))
+}
+
+#[allow(dead_code)]
+pub fn popup_float(contents: Widget, pos: Vec2, size: Vec2) -> Widget {
+    Widget::PopupFloat(PopupFloat::new(
+        contents,
+        pos,
+        size,
+    ))
 }

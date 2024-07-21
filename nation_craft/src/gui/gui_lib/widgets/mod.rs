@@ -10,5 +10,5 @@ pub use button::Button;
 mod label;
 pub use label::Label;
 
-mod floating_window;
-pub use floating_window::FloatingWindow;
+mod popup_float;
+pub use popup_float::PopupFloat;
