@@ -45,7 +45,7 @@ impl UiElement for Widget {
             Widget::Layout(widget) => widget.abs_size(ref_size),
             Widget::Button(button) => button.abs_size(ref_size),
             Widget::Label(label) => label.abs_size(ref_size),
-            Widget::PopupFloat(popup) => Vec2::ZERO,
+            Widget::PopupFloat(popup) => popup.abs_size(ref_size),
             Widget::SpacerPercent(val_percent_parent) => *val_percent_parent * ref_size,
         }
     }
@@ -61,6 +61,7 @@ impl Into<Layout> for Widget {
                     LayoutType::Vertical,
                     Vec2::new(1.0, 1.0),
                     [Section(vec![widget]), Section(vec![]), Section(vec![])],
+                    vec![],
                 )
             }
         }

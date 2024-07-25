@@ -5,7 +5,7 @@ use super::widgets::Layout;
 
 #[derive(Debug)]
 pub struct MainUi {
-    root_layout: Layout,
+    pub root_layout: Layout,
 }
 
 impl MainUi {

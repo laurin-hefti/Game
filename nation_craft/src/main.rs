@@ -34,9 +34,13 @@ async fn main() {
     let skin = style_collection::default_skin(window_size);
     root_ui().push_skin(&skin);
 
-    // Main loop
     loop {
         let screen_size = Vec2::from(screen_size());
+        if settings!().gui.refresh_needed {
+            gui = ui_presets::default_ui();
+            #[cfg(debug_assertions)]
+            gui.check_for_size_overflow(screen_size);
+        }
 
         clear_background(BG_COLOR_PRIMARY);
         gui.draw(screen_size);
@@ -45,7 +49,7 @@ async fn main() {
 
         // Check for low FPS in debug builds
         #[cfg(debug_assertions)]
-        if get_frame_time() > 1.0 / 30.0 {
+        if get_frame_time() > 1.0 / 50.0 {
             info!("FPS: {}", get_fps());
         }
 

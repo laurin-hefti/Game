@@ -20,7 +20,7 @@ pub fn default_window_style(window_size: Vec2) -> ui::Style {
         ))
         .build()
 }
-pub fn default_label_style(window_size: Vec2) -> ui::Style {
+pub fn default_label_style(_window_size: Vec2) -> ui::Style {
     root_ui()
         .style_builder()
         .font_size(FONT_SIZE)
@@ -33,7 +33,7 @@ pub fn default_label_style(window_size: Vec2) -> ui::Style {
         .build()
 }
 
-pub fn default_button_style(window_size: Vec2) -> ui::Style {
+pub fn default_button_style(_window_size: Vec2) -> ui::Style {
     root_ui()
         .style_builder()
         .background_margin(RectOffset::new(8.0, 8.0, 8.0, 8.0))

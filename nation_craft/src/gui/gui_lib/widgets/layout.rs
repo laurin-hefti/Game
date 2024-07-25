@@ -36,14 +36,16 @@ pub struct Layout {
     pub layout: LayoutType,
     size_percent_parent: Vec2,
     sections: [Section; 3],
+    float_widgets: Vec<Widget>,
 }
 
 impl Layout {
-    pub fn new(layout: LayoutType, size_percent_parent: Vec2, sections: [Section; 3]) -> Self {
+    pub fn new(layout: LayoutType, size_percent_parent: Vec2, sections: [Section; 3], float_widgets: Vec<Widget>) -> Self {
         Self {
             layout,
             size_percent_parent,
             sections,
+            float_widgets,
         }
     }
 
@@ -129,6 +131,11 @@ impl Drawable for Layout {
             LayoutType::Horizontal => Vec2::X,
             LayoutType::Vertical => Vec2::Y,
         };
+
+        // Float widgets
+        for child in self.float_widgets.iter() {
+            child.draw(usable_space, pos);
+        }
 
         // First section
         let mut cursor_pos = pos.clone();

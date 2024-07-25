@@ -1,4 +1,4 @@
-use super::{widgets::{Button, Label, PopupFloat, Widget}, PARENT};
+use super::widgets::{Button, Label, PopupFloat, Widget};
 use crate::{constants::BUTTON_SIZE, Vec2};
 
 pub mod constraints {
@@ -10,16 +10,20 @@ pub mod constraints {
 macro_rules! horizontal {
     (width: $width:expr,
      height: $height:expr,
+     $(float : $($float_widgets:expr ),* ;)?
      $(left  : $($left_widgets  :expr),* ;)?
      $(center: $($center_widgets:expr),* ;)?
      $(right : $($right_widgets :expr),* $(;)? )?) => {
         super::widgets::Widget::Layout(super::widgets::Layout::new(
             super::widgets::layout::LayoutType::Horizontal,
-            crate::Vec2::new($width, $height), [
-            super::widgets::layout::Section(vec![$($( $left_widgets   ),*)?]),
-            super::widgets::layout::Section(vec![$($( $center_widgets ),*)?]),
-            super::widgets::layout::Section(vec![$($( $right_widgets  ),*)?]),
-        ]))
+            crate::Vec2::new($width, $height),
+            [
+                super::widgets::layout::Section(vec![$($( $left_widgets   ),*)?]),
+                super::widgets::layout::Section(vec![$($( $center_widgets ),*)?]),
+                super::widgets::layout::Section(vec![$($( $right_widgets  ),*)?]),
+            ],
+            vec![$($( $float_widgets  ),*)?],
+        ))
     };
 }
 
@@ -28,17 +32,20 @@ macro_rules! vertical {
     (width: $width:expr,
      height: $height:expr,
 
-     $(top   : $($top_widgets    :expr),* ;)?
-     $(center: $($center_widgets :expr),* ;)?
+     $(float : $($float_widgets:expr  ),*   ;)?
+     $(top   : $($top_widgets    :expr),*   ;)?
+     $(center: $($center_widgets :expr),*   ;)?
      $(bottom: $($bottom_widgets :expr),* $(;)? )?) => {
         super::widgets::Widget::Layout(super::widgets::Layout::new(
             super::widgets::layout::LayoutType::Vertical,
-            crate::Vec2::new($width, $height), [
-
-            super::widgets::layout::Section(vec![$($( $top_widgets    ),*)?]),
-            super::widgets::layout::Section(vec![$($( $center_widgets ),*)?]),
-            super::widgets::layout::Section(vec![$($( $bottom_widgets ),*)?]),
-        ]))
+            crate::Vec2::new($width, $height),
+            [
+                super::widgets::layout::Section(vec![$($( $top_widgets    ),*)?]),
+                super::widgets::layout::Section(vec![$($( $center_widgets ),*)?]),
+                super::widgets::layout::Section(vec![$($( $bottom_widgets ),*)?]),
+            ],
+            vec![$($( $float_widgets  ),*)?],
+        ))
     };
 }
 
@@ -52,7 +59,7 @@ macro_rules! vert_centered {
 #[macro_export]
 macro_rules! horiz_centered {
     ($($widgets:expr),*) => {
-        horizontal!(width: PARENT, height: FIT_CONTENT, center: $($widgets),*;)
+        horizontal!(width: super::PARENT, height: FIT_CONTENT, center: $($widgets),*;)
     };
 }
 
@@ -78,9 +85,10 @@ pub fn label(text: &str, x: f32, y: f32) -> Widget {
 
 #[allow(dead_code)]
 pub fn popup_float(contents: Widget, pos: Vec2, size: Vec2) -> Widget {
-    Widget::PopupFloat(PopupFloat::new(
-        contents,
-        pos,
-        size,
-    ))
+    Widget::PopupFloat(PopupFloat::new(contents, pos, size))
+}
+
+#[allow(dead_code)]
+pub fn empty() -> Widget {
+    Widget::SpacerPercent(0.0)
 }

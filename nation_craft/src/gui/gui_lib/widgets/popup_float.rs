@@ -32,6 +32,6 @@ impl Drawable for PopupFloat {
 impl UiElement for PopupFloat {
     fn update(&mut self) {}
     fn abs_size(&self, _ref_size: Vec2) -> Vec2 {
-        Vec2::ZERO
+        self.size
     }
 }
